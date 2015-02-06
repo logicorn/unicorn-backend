@@ -1,0 +1,15 @@
+{
+  "name": "unicorn-backend",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://Ezku@bitbucket.org/Ezku/unicorn-backend.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
