@@ -1,0 +1,8 @@
+<script src="/socket.io/socket.io.js"></script>
+<script>
+var socket = io.connect("http://localhost:9001");
+socket.on('yo', function(data) {
+  console.log(data);
+  socket.emit('ping', { pow: true });
+});
+</script>
