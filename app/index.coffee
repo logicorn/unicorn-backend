@@ -1,5 +1,4 @@
-Bacon = require 'baconjs'
-dgram = require 'dgram'
+craneSpeedController = require './crane-speed-controller'
 
 app = require('express')()
 server = require('http').Server(app)
@@ -10,50 +9,8 @@ server.listen(process.env.PORT)
 app.get '/', (req, res) ->
   res.sendFile "#{__dirname}/static/test.html"
 
-connectCrane = ->
-  socket = dgram.createSocket 'udp4'
-
-  # (string) -> Promise
-  send = (message) ->
-    new Promise (resolve, reject) ->
-      envelope = new Buffer message
-      socket.send envelope, 0, envelope.length, process.env.CRANE_PORT, process.env.CRANE_IP, (err) ->
-        if err?
-          reject new Error "UDP message send failure: #{err}"
-        else
-          resolve()
-
-  disconnect = ->
-    socket.close()
-
-  incomingSpeed = new Bacon.Bus
-  currentSpeed = incomingSpeed
-    .toProperty({ a: 0, e: 0, h: 0 })
-    .filter((axes) -> axes.a? and axes.e? and axes.h?)
-
-  isActive = currentSpeed.map((axes) ->
-    axes.a is axes.e is axes.h is 0
-  )
-
-  currentSpeed.map(craneSpeedMessage).onValue send
-
-  setSpeed = (axes) ->
-    incomingSpeed.push axes
-
-  return {
-    send
-    setSpeed
-    disconnect
-  }
-
-# (a: hoist, e: trolley, h: bridge) -> string
-craneSpeedMessage = do ->
-  curtail = (v) -> Math.max(-255, Math.min(255, v))
-  ({ a, e, h }) ->
-    "T;#{curtail a};#{curtail e};#{curtail h};"
-
 io.on 'connection', (socket) ->
-  crane = connectCrane()
+  crane = craneSpeedController()
   console.log "Connected to controller over websocket"
 
   socket.on "hello", ->
@@ -66,8 +23,7 @@ io.on 'connection', (socket) ->
 
   socket.on "stop", ->
     console.log "Emergency stop!"
-    crane.send craneSpeedMessage { a: 0, e: 0, h: 0 }
-    crane.disconnect()
+    crane.stop()
 
   socket.on "speed", ({ a, e, h }) ->
     crane.setSpeed { a, e, h }
