@@ -12,38 +12,48 @@ app.get '/', (req, res) ->
 connectCrane = ->
   socket = dgram.createSocket 'udp4'
 
+  # (string) -> Promise
   send: (message) ->
-    console.log "Crane control message: #{message}"
-    envelope = new Buffer message
-    socket.send envelope, 0, envelope.length, process.env.CRANE_PORT, process.env.CRANE_IP, (err) ->
-      if err?
-        console.log "Error when sending message: #{err}"
-        socket.close()
+    new Promise (resolve, reject) ->
+      envelope = new Buffer message
+      socket.send envelope, 0, envelope.length, process.env.CRANE_PORT, process.env.CRANE_IP, (err) ->
+        if err?
+          reject new Error "UDP message send failure: #{err}"
+        else
+          resolve()
 
-  close: ->
+  disconnect: ->
     socket.close()
 
-# (hoist, trolley, bridge) -> string
+# (a: hoist, e: trolley, h: bridge) -> string
 craneSpeedMessage = do ->
   curtail = (v) -> Math.max(-255, Math.min(255, v))
-  (a, e, h) ->
+  ({ a, e, h }) ->
     "T;#{curtail a};#{curtail e};#{curtail h};"
 
 goSlowMessage = (e, h) ->
-  acual_e = e * 100
-  acual_h = h * 100
-  craneSpeedMessage 0, acual_e, acual_h
+  craneSpeedMessage {
+    a: 0
+    e: e*100
+    h: h*100
+  }
 
 io.on 'connection', (socket) ->
   crane = connectCrane()
-  console.log "Connected over socket"
+  console.log "Connected to controller over websocket"
 
   socket.on "hello", ->
-    console.log "Got handshake"
+    console.log "Got controller handshake"
     socket.emit "connected", {}
 
   socket.on "disconnect", ->
-    console.log "Lost connection"
+    console.log "Lost connection to controller"
+    crane.disconnect()
 
-  socket.on "move", ({x, y}) ->
-    crane.send goSlowMessage x, y
+  socket.on "stop", ->
+    console.log "Emergency stop!"
+    crane.send { a: 0, e: 0, h: 0 }
+    crane.disconnect()
+
+  socket.on "speed", ({ a, e, h }) ->
+    crane.send craneSpeedMessage { a, e, h }
