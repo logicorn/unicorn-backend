@@ -18,13 +18,15 @@ craneControlBox = ->
     .filter((axes) -> axes.a? and axes.e? and axes.h?)
 
   activeStatus = currentSpeed.map((axes) ->
-    axes.a is axes.e is axes.h is 0
+    !(axes.a is axes.e is axes.h is 0)
   ).skipDuplicates()
 
   speedUpdateToSend = activeStatus.flatMapLatest (active) ->
     if active
+      debug "Controls active: sampling current input"
       currentSpeed.sample(1000)
     else
+      debug "Controls inactive"
       Bacon.once neutral
 
   {
