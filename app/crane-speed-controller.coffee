@@ -38,7 +38,7 @@ craneControlBox = ->
 craneSpeedMessage :: (a: hoist, e: trolley, h: bridge) -> String
 ###
 craneSpeedMessage = do ->
-  curtail = (v) -> Math.max(-255, Math.min(255, v))
+  curtail = (v) -> ~~Math.max(-255, Math.min(255, v))
   ({ a, e, h }) ->
     "T;#{curtail a};#{curtail e};#{curtail h};"
 
