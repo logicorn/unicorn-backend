@@ -1,3 +1,4 @@
+debug = require('debug')('crane:service')
 craneSpeedController = require './crane-speed-controller'
 
 app = require('express')()
@@ -11,18 +12,18 @@ app.get '/', (req, res) ->
 
 io.on 'connection', (socket) ->
   crane = craneSpeedController()
-  console.log "Connected to controller over websocket"
+  debug "Connected to controller over websocket"
 
   socket.on "hello", ->
-    console.log "Got controller handshake"
+    debug "Got controller handshake"
     socket.emit "connected", {}
 
   socket.on "disconnect", ->
-    console.log "Lost connection to controller"
+    debug "Lost connection to controller"
     crane.disconnect()
 
   socket.on "stop", ->
-    console.log "Emergency stop!"
+    debug "Emergency stop!"
     crane.stop()
 
   socket.on "speed", ({ a, e, h }) ->

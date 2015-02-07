@@ -1,3 +1,4 @@
+debug = require('debug')('crane:socket')
 dgram = require 'dgram'
 Promise = require 'bluebird'
 
@@ -18,6 +19,7 @@ module.exports = ->
         if err?
           reject new Error "UDP message send failure: #{err}"
         else
+          debug(message)
           resolve()
 
   close = ->

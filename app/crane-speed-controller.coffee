@@ -1,3 +1,4 @@
+debug = require('debug')('crane:control')
 Bacon = require 'baconjs'
 openCraneSocket = require './open-crane-socket'
 
@@ -52,6 +53,7 @@ module.exports = ->
     socket.close()
 
   setSpeed = (axes) ->
+    debug axes
     control.in.push axes
 
   stop = ->
