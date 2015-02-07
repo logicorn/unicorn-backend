@@ -26,15 +26,19 @@ connectCrane = ->
   disconnect = ->
     socket.close()
 
-  latestSpeed = new Bacon.Bus
-  currentAxesToSend = latestSpeed
-    .toProperty({ a: 0, e: 0, h: 0})
+  incomingSpeed = new Bacon.Bus
+  currentSpeed = incomingSpeed
+    .toProperty({ a: 0, e: 0, h: 0 })
     .filter((axes) -> axes.a? and axes.e? and axes.h?)
 
-  currentAxesToSend.map(craneSpeedMessage).onValue send
+  isActive = currentSpeed.map((axes) ->
+    axes.a is axes.e is axes.h is 0
+  )
+
+  currentSpeed.map(craneSpeedMessage).onValue send
 
   setSpeed = (axes) ->
-    latestSpeed.push axes
+    incomingSpeed.push axes
 
   return {
     send
