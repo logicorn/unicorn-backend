@@ -10,9 +10,10 @@ craneControlBox :: () -> {
 }
 ###
 craneControlBox = ->
+  neutral = { a: 0, e: 0, h: 0 }
   incomingSpeed = new Bacon.Bus
   currentSpeed = incomingSpeed
-    .toProperty({ a: 0, e: 0, h: 0 })
+    .toProperty(neutral)
     .filter((axes) -> axes.a? and axes.e? and axes.h?)
 
   activeStatus = currentSpeed.map((axes) ->
