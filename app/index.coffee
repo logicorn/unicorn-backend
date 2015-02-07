@@ -11,27 +11,34 @@ app.get '/', (req, res) ->
 
 connectCrane = ->
   socket = dgram.createSocket 'udp4'
-  socket.setBroadcast true
 
   send: (message) ->
     console.log "Crane control message: #{message}"
-    socket.send(message, 0, message.length, process.env.CRANE_PORT, process.env.CRANE_IP)
+    envelope = new Buffer message
+    socket.send envelope, 0, envelope.length, process.env.CRANE_PORT, process.env.CRANE_IP, (err) ->
+      if err?
+        console.log "Error when sending message: #{err}"
+        socket.close()
+
+  close: ->
+    socket.close()
 
 # (hoist, trolley, bridge) -> string
-craneSpeedMessage = (a, e, h) ->
-  "T;#{a};#{e};#{h}"
+craneSpeedMessage = do ->
+  curtail = (v) -> Math.max(-255, Math.min(255, v))
+  (a, e, h) ->
+    "T;#{curtail a};#{curtail e};#{curtail h};"
 
 goSlowMessage = (e, h) ->
-  acual_e = e * 20
-  acual_h = h * 20
+  acual_e = e * 100
+  acual_h = h * 100
   craneSpeedMessage 0, acual_e, acual_h
 
 io.on 'connection', (socket) ->
-  crane = null
+  crane = connectCrane()
   console.log "Connected over socket"
 
   socket.on "hello", ->
-    crane = connectCrane()
     console.log "Got handshake"
     socket.emit "connected", {}
 
